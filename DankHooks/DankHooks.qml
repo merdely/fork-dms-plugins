@@ -7,8 +7,10 @@ import qs.Modules.Plugins
 PluginComponent {
     id: root
 
+    signal dankHooksStarted
     property bool preparingForSleep: false
 
+    property string hookDankHooksStarted: pluginData.dankHooksStarted || ""
     property string hookWallpaperPath: pluginData.wallpaperPath || ""
     property string hookLightMode: pluginData.lightMode || ""
     property string hookTheme: pluginData.theme || ""
@@ -159,6 +161,17 @@ PluginComponent {
     }
 
     Connections {
+        function onDankHooksStarted() {
+            const first_start = PluginService.getGlobalVar("dankHooks", "first_start", true);
+            if (hookDankHooksStarted) {
+                executeHook(hookDankHooksStarted, "onDankHooksStarted", first_start ? "started" : "restarted");
+                if (first_start)
+                    PluginService.setGlobalVar("dankHooks", "first_start", false);
+            }
+        }
+    }
+
+    Connections {
         target: DMSService
 
         function onLoginctlStateUpdate(data) {
@@ -294,6 +307,26 @@ PluginComponent {
                 destroy();
             }
         }
+    }
+
+    Timer {
+        id: dataTimer
+        interval: 1000
+        repeat: true
+        onTriggered: {
+            if (hookDankHooksStarted !== null) {
+                stop()
+                dankHooksStarted();
+            } else
+                console.info("Timer: Waiting 1 second")
+        }
+    }
+
+    Component.onCompleted: {
+        if (hookDankHooksStarted !== null)
+            dataTimer.start()
+        else
+            dankHooksStarted()
     }
 
     Component.onDestruction: {
