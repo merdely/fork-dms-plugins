@@ -312,7 +312,7 @@ PluginComponent {
     Timer {
         id: dataTimer
         interval: 1000
-        repeat: true
+        repeat: false
         onTriggered: {
             if (hookDankHooksStarted !== null) {
                 stop()
